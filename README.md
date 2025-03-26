@@ -6,7 +6,8 @@ This project aims to adapt the on-screen keyboard for handheld devices.
 
 Based on vboard, features such as the ESC key and special character switching via Shift have been added.
 
-主要适用于wayland.
+主要适用于wayland。
+
 Mainly suitable for Wayland.
 
 
