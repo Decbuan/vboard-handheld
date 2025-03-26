@@ -10,6 +10,8 @@ Based on vboard, features such as the ESC key and special character switching vi
 
 Mainly suitable for Wayland.
 
+![image](https://github.com/user-attachments/assets/da9f86c4-c24d-4e9f-91b8-9c0b76440d13)
+
 
 ### **For BazziteOS distributions**  
 ```bash
