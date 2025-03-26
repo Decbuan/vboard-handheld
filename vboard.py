@@ -7,7 +7,9 @@ import configparser
 os.environ['GDK_BACKEND'] = 'x11'
 
 gi.require_version('Gtk', '3.0')
-from gi.repository import Gtk, GLib, Gdk
+from gi.repository import Gtk
+from gi.repository import GLib
+
 
 key_mapping = {uinput.KEY_ESC: "Esc", uinput.KEY_1: "1", uinput.KEY_2: "2", uinput.KEY_3: "3", uinput.KEY_4: "4", uinput.KEY_5: "5", uinput.KEY_6: "6",
     uinput.KEY_7: "7", uinput.KEY_8: "8", uinput.KEY_9: "9", uinput.KEY_0: "0", uinput.KEY_MINUS: "-", uinput.KEY_EQUAL: "=",
@@ -65,10 +67,10 @@ class VirtualKeyboard(Gtk.Window):
             uinput.KEY_LEFTMETA: False,
             uinput.KEY_RIGHTMETA: False
         }
-        
+
         self.original_labels = {}
         self.colors = [
-            ("Black", "0,0,0"), ("Red", "255,0,0"), ("Pink", "255,105,183"), 
+            ("Black", "0,0,0"), ("Red", "255,0,0"), ("Pink", "255,105,183"),
             ("White", "255,255,255"), ("Green", "0,255,0"), ("Blue", "0,0,110"),
             ("Gray", "128,128,128"), ("Dark Gray", "64,64,64"), ("Orange", "255,165,0"),
             ("Yellow", "255,255,0"), ("Purple", "128,0,128"), ("Cyan", "0,255,255"),
@@ -77,21 +79,29 @@ class VirtualKeyboard(Gtk.Window):
             ("Olive", "128,128,0"), ("Maroon", "128,0,0"), ("Indigo", "75,0,130"),
             ("Beige", "245,245,220"), ("Lavender", "230,230,250")
         ]
-        
+
         if self.width != 0:
             self.set_default_size(self.width, self.height)
 
-        # ESC按钮
+        # ===== 修改：更大的ESC按钮 =====
         self.header = Gtk.HeaderBar()
+
+        # 创建ESC按钮容器
         esc_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=0)
         esc_button = Gtk.Button(label="ESC")
-        esc_button.set_size_request(80, -1)
+
+        # 设置按钮大小
+        esc_button.set_size_request(80, -1)  # 宽度80px，高度自动适应
         esc_button.connect("clicked", lambda _: self.device.emit(uinput.KEY_ESC, 1) or time.sleep(0.05) or self.device.emit(uinput.KEY_ESC, 0))
+
+        # 添加CSS类名用于单独样式控制
         esc_button.get_style_context().add_class("esc-button")
         esc_box.pack_start(esc_button, False, False, 0)
         self.header.pack_start(esc_box)
+
         self.header.set_show_close_button(True)
-        
+        # ===== ESC按钮修改结束 =====
+
         self.buttons=[]
         self.color_combobox = Gtk.ComboBoxText()
         self.set_titlebar(self.header)
@@ -118,25 +128,6 @@ class VirtualKeyboard(Gtk.Window):
         for row_index, keys in enumerate(rows):
             self.create_row(grid, row_index, keys)
 
-        # 显示窗口并定位到屏幕底部
-        self.show_all()
-        self.position_bottom()
-
-    def position_bottom(self):
-        """将窗口定位到屏幕底部中央"""
-        screen = self.get_screen()
-        monitor = screen.get_primary_monitor() if hasattr(screen, 'get_primary_monitor') else 0
-        geometry = screen.get_monitor_geometry(monitor)
-        
-        # 获取窗口实际大小
-        width, height = self.get_size()
-        
-        # 计算位置（水平居中，距离底部50px）
-        x = geometry.x + (geometry.width - width) // 2
-        y = geometry.y + geometry.height - height - 50
-        
-        self.move(x, y)
-
     def create_row(self, grid, row_index, keys):
         col = 0
         width=0
@@ -147,7 +138,7 @@ class VirtualKeyboard(Gtk.Window):
                     button = Gtk.Button(label=key_label[:-2])
                 else:
                     button = Gtk.Button(label=key_label)
-                
+
                 self.original_labels[button] = key_label
                 button.connect("clicked", self.on_button_click, key_event)
 
@@ -260,11 +251,13 @@ class VirtualKeyboard(Gtk.Window):
     def apply_css(self):
         provider = Gtk.CssProvider()
         css = f"""
+        /* ===== 新增：ESC按钮专属样式 ===== */
         .esc-button {{
             min-width: 80px;
             font-weight: bold;
             margin-right: 10px;
         }}
+
         headerbar {{
             background-color: rgba({self.bg_color}, {self.opacity});
         }}
@@ -341,4 +334,7 @@ if __name__ == "__main__":
     win = VirtualKeyboard()
     win.connect("destroy", Gtk.main_quit)
     win.connect("destroy", lambda w: win.save_settings())
+    win.show_all()
+    win.connect("configure-event", win.on_resize)
+    win.change_visibility()
     Gtk.main()
